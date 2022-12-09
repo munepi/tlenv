@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# Summary: Set or show the local application-specific TeX Live version
+#
+# Usage: tlenv local <version>
+#        tlenv local --unset
+#
+# Sets the local application-specific TeX Live version by writing the
+# version name to a file named `.texlive-version'.
+#
+# When you run a TeX Live command, tlenv will look for a `.texlive-version'
+# file in the current directory and each parent directory. If no such
+# file is found in the tree, tlenv will use the global TeX Live version
+# specified with `tlenv global'. A version specified with the
+# `TLENV_VERSION' environment variable takes precedence over local
+# and global versions.
+#
+# <version> should be a string matching a TeX Live version known to tlenv.
+# The special version string `system' will use your default system TeX Live.
+# Run `tlenv versions' for a list of available TeX Live versions.
+
+set -e
+[ -n "$TLENV_DEBUG" ] && set -x
+
+# Provide tlenv completions
+if [ "$1" = "--complete" ]; then
+  echo --unset
+  echo system
+  exec tlenv-versions --bare
+fi
+
+TLENV_VERSION="$1"
+
+if [ "$TLENV_VERSION" = "--unset" ]; then
+  rm -f .texlive-version
+elif [ -n "$TLENV_VERSION" ]; then
+  tlenv-version-file-write .texlive-version "$TLENV_VERSION"
+else
+  if version_file="$(tlenv-version-file "$PWD")"; then
+    tlenv-version-file-read "$version_file"
+  else
+    echo "tlenv: no local version configured for this directory" >&2
+    exit 1
+  fi
+fi
