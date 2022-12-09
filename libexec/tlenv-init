@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+# Summary: Configure the shell environment for tlenv
+# Usage: eval "$(tlenv init - [--no-rehash] [<shell>])"
+
+set -e
+[ -n "$TLENV_DEBUG" ] && set -x
+
+# Provide tlenv completions
+if [ "$1" = "--complete" ]; then
+  echo -
+  echo --no-rehash
+  echo bash
+  echo fish
+  echo ksh
+  echo zsh
+  exit
+fi
+
+print=""
+no_rehash=""
+for args in "$@"
+do
+  if [ "$args" = "-" ]; then
+    print=1
+    shift
+  fi
+
+  if [ "$args" = "--no-rehash" ]; then
+    no_rehash=1
+    shift
+  fi
+done
+
+shell="$1"
+if [ -z "$shell" ]; then
+  shell="$(ps -p "$PPID" -o 'args=' 2>/dev/null || true)"
+  shell="${shell%% *}"
+  shell="${shell##-}"
+  shell="${shell:-$SHELL}"
+  shell="${shell##*/}"
+  shell="${shell%%-*}"
+fi
+
+root="${BASH_SOURCE:-$0}"
+root="${root%/*}"
+root="${root%/*}"
+
+tlenv_in_path=true
+if [ -n "$TLENV_ORIG_PATH" ]; then
+  PATH="$TLENV_ORIG_PATH" type -P tlenv >/dev/null || tlenv_in_path=""
+fi
+
+if [ -z "$print" ]; then
+  case "$shell" in
+  bash )
+    if [ -f "${HOME}/.bashrc" ] && [ ! -f "${HOME}/.bash_profile" ]; then
+      profile='~/.bashrc'
+    else
+      profile='~/.bash_profile'
+    fi
+    ;;
+  zsh )
+    profile='~/.zshrc'
+    ;;
+  ksh )
+    profile='~/.profile'
+    ;;
+  fish )
+    profile='~/.config/fish/config.fish'
+    ;;
+  * )
+    profile='your profile'
+    ;;
+  esac
+
+  tlenv_command=tlenv
+  if [ -z "$tlenv_in_path" ]; then
+    tlenv_command="$root/bin/tlenv"
+    tlenv_command="${tlenv_command/$HOME\//~/}"
+  fi
+
+  { echo "# Please add the following line to your \`${profile}' file,"
+    echo "# then restart your terminal."
+    echo
+    [ -t 2 ] && printf '\e[33;1m'
+    case "$shell" in
+    fish )
+      printf 'status --is-interactive; and %s init - fish | source' "$tlenv_command"
+      ;;
+    * )
+      # shellcheck disable=SC2016
+      printf 'eval "$(%s init - %s)"' "$tlenv_command" "$shell"
+      ;;
+    esac
+    [ -t 2 ] && printf '\e[m'
+    echo
+    echo
+  } >&2
+
+  exit 1
+fi
+
+mkdir -p "${TLENV_ROOT}/"{shims,versions}
+
+case "$shell" in
+fish )
+  [ -n "$tlenv_in_path" ] || printf "set -gx PATH '%s/bin' \$PATH\n" "$root"
+  printf "set -gx PATH '%s/shims' \$PATH\n" "$TLENV_ROOT"
+  printf 'set -gx TLENV_SHELL %s\n' "$shell"
+;;
+* )
+  # shellcheck disable=SC2016
+  [ -n "$tlenv_in_path" ] || printf 'export PATH="%s/bin:${PATH}"\n' "$root"
+  # shellcheck disable=SC2016
+  printf 'export PATH="%s/shims:${PATH}"\n' "$TLENV_ROOT"
+  printf 'export TLENV_SHELL=%s\n' "$shell"
+
+  completion="${root}/completions/tlenv.${shell}"
+  if [ -r "$completion" ]; then
+    printf "source '%s'\n" "$completion"
+  fi
+;;
+esac
+
+if [ -z "$no_rehash" ]; then
+  echo 'command tlenv rehash 2>/dev/null'
+fi
+
+IFS=$'\n' read -d '' -r -a commands <<<"$(tlenv-commands --sh)" || true
+
+case "$shell" in
+fish )
+  cat <<EOS
+function tlenv
+  set command \$argv[1]
+  set -e argv[1]
+
+  switch "\$command"
+  case ${commands[*]}
+    tlenv "sh-\$command" \$argv|source
+  case '*'
+    command tlenv "\$command" \$argv
+  end
+end
+EOS
+  ;;
+ksh )
+  cat <<EOS
+function tlenv {
+  typeset command
+EOS
+  ;;
+* )
+  cat <<EOS
+tlenv() {
+  local command
+EOS
+  ;;
+esac
+
+if [ "$shell" != "fish" ]; then
+IFS="|"
+cat <<EOS
+  command="\${1:-}"
+  if [ "\$#" -gt 0 ]; then
+    shift
+  fi
+
+  case "\$command" in
+  ${commands[*]})
+    eval "\$(tlenv "sh-\$command" "\$@")";;
+  *)
+    command tlenv "\$command" "\$@";;
+  esac
+}
+EOS
+fi
