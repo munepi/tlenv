@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Summary: Show the current TeX Live version
+set -e
+[ -n "$TLENV_DEBUG" ] && set -x
+
+if [ -z "$TLENV_VERSION" ]; then
+  TLENV_VERSION_FILE="$(tlenv-version-file)"
+  TLENV_VERSION="$(tlenv-version-file-read "$TLENV_VERSION_FILE" || true)"
+fi
+
+IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks version-name)" || true
+for script in "${scripts[@]}"; do
+  # shellcheck disable=SC1090
+  source "$script"
+done
+
+if [ -z "$TLENV_VERSION" ] || [ "$TLENV_VERSION" = "system" ]; then
+  echo "system"
+  exit
+fi
+
+version_exists() {
+  local version="$1"
+  [ -d "${TLENV_ROOT}/versions/${version}" ]
+}
+
+if version_exists "$TLENV_VERSION"; then
+  echo "$TLENV_VERSION"
+# elif version_exists "${TLENV_VERSION#texlive-}"; then
+#   echo "${TLENV_VERSION#texlive-}"
+else
+  echo "tlenv: version \`$TLENV_VERSION' is not installed (set by $(tlenv-version-origin))" >&2
+  exit 1
+fi
