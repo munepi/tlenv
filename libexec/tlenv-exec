@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# Summary: Run an executable with the selected TeX Live version
+#
+# Usage: tlenv exec <command> [arg1 arg2...]
+#
+# Runs an executable by first preparing PATH so that the selected
+# TeX Live version's `bin' directory is at the front.
+#
+# For example, if the currently selected TeX Live version is 2021:
+#   tlenv exec tlmgr update --self --all
+#
+# is equivalent to:
+#   PATH="$TLENV_ROOT/versions/1.9.3-p327/bin:$PATH" bundle install
+
+set -e
+[ -n "$TLENV_DEBUG" ] && set -x
+
+# Provide tlenv completions
+if [ "$1" = "--complete" ]; then
+  exec tlenv-shims --short
+fi
+
+TLENV_VERSION="$(tlenv-version-name)"
+TLENV_COMMAND="$1"
+
+if [ -z "$TLENV_COMMAND" ]; then
+  tlenv-help --usage exec >&2
+  exit 1
+fi
+
+export TLENV_VERSION
+TLENV_COMMAND_PATH="$(tlenv-which "$TLENV_COMMAND")"
+TLENV_BIN_PATH="${TLENV_COMMAND_PATH%/*}"
+
+IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks exec)" || true
+for script in "${scripts[@]}"; do
+  # shellcheck disable=SC1090
+  source "$script"
+done
+
+shift 1
+if [ "$TLENV_VERSION" != "system" ]; then
+  export PATH="${TLENV_BIN_PATH}:${PATH}"
+fi
+exec -a "$TLENV_COMMAND" "$TLENV_COMMAND_PATH" "$@"
