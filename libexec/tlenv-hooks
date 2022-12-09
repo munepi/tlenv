@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Summary: List hook scripts for a given tlenv command
+# Usage: tlenv hooks <command>
+
+set -e
+[ -n "$TLENV_DEBUG" ] && set -x
+
+# Provide tlenv completions
+if [ "$1" = "--complete" ]; then
+  echo exec
+  echo rehash
+  echo version-name
+  echo version-origin
+  echo which
+  exit
+fi
+
+TLENV_COMMAND="$1"
+if [ -z "$TLENV_COMMAND" ]; then
+  tlenv-help --usage hooks >&2
+  exit 1
+fi
+
+IFS=: read -r -a hook_paths <<<"$TLENV_HOOK_PATH"
+
+shopt -s nullglob
+for path in "${hook_paths[@]}"; do
+  for script in "$path/$TLENV_COMMAND"/*.bash; do
+    echo "$script"
+  done
+done
+shopt -u nullglob
