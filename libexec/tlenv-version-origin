@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Summary: Explain how the current TeX Live version is set
+set -e
+[ -n "$TLENV_DEBUG" ] && set -x
+
+unset TLENV_VERSION_ORIGIN
+
+IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks version-origin)" || true
+for script in "${scripts[@]}"; do
+  # shellcheck disable=SC1090
+  source "$script"
+done
+
+if [ -n "$TLENV_VERSION_ORIGIN" ]; then
+  echo "$TLENV_VERSION_ORIGIN"
+elif [ -n "$TLENV_VERSION" ]; then
+  echo "TLENV_VERSION environment variable"
+else
+  tlenv-version-file
+fi
