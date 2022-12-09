@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Summary: Display prefix for a TeX Live version
+# Usage: tlenv prefix [<version>]
+#
+# Displays the directory where a TeX Live version is installed. If no
+# version is given, `tlenv prefix' displays the location of the
+# currently selected version.
+
+set -e
+[ -n "$TLENV_DEBUG" ] && set -x
+
+# Provide tlenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec tlenv-versions --bare
+fi
+
+if [ -n "$1" ]; then
+  export TLENV_VERSION="$1"
+elif [ -z "$TLENV_VERSION" ]; then
+  TLENV_VERSION="$(tlenv-version-name)"
+fi
+
+if [ "$TLENV_VERSION" = "system" ]; then
+  if TLMGR_PATH="$(tlenv-which tlmgr)"; then
+    TLMGR_PATH="${TLMGR_PATH%/*}"
+    TLENV_PREFIX_PATH="${TLMGR_PATH%/bin}"
+    echo "${TLENV_PREFIX_PATH:-/}"
+    exit
+  else
+    echo "tlenv: system version not found in PATH" >&2
+    exit 1
+  fi
+fi
+
+TLENV_PREFIX_PATH="${TLENV_ROOT}/versions/${TLENV_VERSION}"
+if [ ! -d "$TLENV_PREFIX_PATH" ]; then
+  echo "tlenv: version \`${TLENV_VERSION}' not installed" >&2
+  exit 1
+fi
+
+echo "$TLENV_PREFIX_PATH"
