@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+#
+# Summary: Display the full path to an executable
+#
+# Usage: tlenv which <command>
+#
+# Displays the full path to the executable that tlenv will invoke when
+# you run the given command.
+
+set -e
+[ -n "$TLENV_DEBUG" ] && set -x
+
+# Provide tlenv completions
+if [ "$1" = "--complete" ]; then
+  exec tlenv-shims --short
+fi
+
+remove_from_path() {
+  local path_to_remove="$1"
+  local path_before
+  local result=":${PATH//\~/$HOME}:"
+  while [ "$path_before" != "$result" ]; do
+    path_before="$result"
+    result="${result//:$path_to_remove:/:}"
+  done
+  result="${result%:}"
+  echo "${result#:}"
+}
+
+TLENV_COMMAND="$1"
+
+if [ -z "$TLENV_COMMAND" ]; then
+  tlenv-help --usage which >&2
+  exit 1
+fi
+
+TLENV_VERSION="${TLENV_VERSION:-$(tlenv-version-name)}"
+
+if [ "$TLENV_VERSION" = "system" ]; then
+  PATH="$(remove_from_path "${TLENV_ROOT}/shims")" \
+    TLENV_COMMAND_PATH="$(command -v "$TLENV_COMMAND" || true)"
+else
+  TLENV_COMMAND_PATH="${TLENV_ROOT}/versions/${TLENV_VERSION}/bin/${TLENV_COMMAND}"
+fi
+
+if [[ ! -x "$TLENV_COMMAND_PATH" && -n "$GEM_HOME" && -x "${GEM_HOME}/bin/${TLENV_COMMAND}" ]]; then
+  TLENV_COMMAND_PATH="${GEM_HOME}/bin/${TLENV_COMMAND}"
+fi
+
+IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks which)" || true
+for script in "${scripts[@]}"; do
+  # shellcheck disable=SC1090
+  source "$script"
+done
+
+if [ -x "$TLENV_COMMAND_PATH" ]; then
+  echo "$TLENV_COMMAND_PATH"
+elif [ "$TLENV_VERSION" != "system" ] && [ ! -d "${TLENV_ROOT}/versions/${TLENV_VERSION}" ]; then
+  echo "tlenv: version \`$TLENV_VERSION' is not installed (set by $(tlenv-version-origin))" >&2
+  exit 1
+else
+  echo "tlenv: $TLENV_COMMAND: command not found" >&2
+
+  versions="$(tlenv-whence "$TLENV_COMMAND" || true)"
+  if [ -n "$versions" ]; then
+    { echo
+      echo "The \`$1' command exists in these TeX Live versions:"
+      echo "$versions" | sed 's/^/  /g'
+      echo
+    } >&2
+  fi
+
+  exit 127
+fi
