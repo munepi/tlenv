@@ -62,7 +62,7 @@ sort_versions() {
 }
 
 versions="$(
-  if TLENV_VERSION=system tlenv-which ruby >/dev/null 2>&1; then
+  if TLENV_VERSION=system tlenv-which tlmgr >/dev/null 2>&1; then
     echo system
   fi
   list_versions | sort_versions
