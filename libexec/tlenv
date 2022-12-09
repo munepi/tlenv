@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+set -e
+
+if [ "$1" = "--debug" ]; then
+  export TLENV_DEBUG=1
+  shift
+fi
+
+if [ -n "$TLENV_DEBUG" ]; then
+  # https://wiki-dev.bash-hackers.org/scripting/debuggingtips#making_xtrace_more_useful
+  export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+  set -x
+fi
+
+abort() {
+  { if [ "$#" -eq 0 ]; then cat -
+    else echo "tlenv: $*"
+    fi
+  } >&2
+  exit 1
+}
+
+if [ -z "${TLENV_ROOT}" ]; then
+  TLENV_ROOT="${HOME}/.tlenv"
+else
+  TLENV_ROOT="${TLENV_ROOT%/}"
+fi
+export TLENV_ROOT
+
+if [ -z "${TLENV_DIR}" ]; then
+  TLENV_DIR="$PWD"
+else
+  [[ $TLENV_DIR == /* ]] || TLENV_DIR="$PWD/$TLENV_DIR"
+  cd "$TLENV_DIR" 2>/dev/null || abort "cannot change working directory to \`$TLENV_DIR'"
+  TLENV_DIR="$PWD"
+  cd "$OLDPWD"
+fi
+export TLENV_DIR
+
+[ -n "$TLENV_ORIG_PATH" ] || export TLENV_ORIG_PATH="$PATH"
+
+shopt -s nullglob
+
+tlenv_bin="${BASH_SOURCE:-$0}"
+if [ -L "$tlenv_bin" ]; then
+  # resolve tlenv symlink to find out where the actual libexec directory is
+  if readlink="$(type -P greadlink)" || readlink="$(type -P readlink)"; then
+    resolved="$("$readlink" "$tlenv_bin" 2>/dev/null)"
+    if [[ $resolved == /* ]]; then
+      libexec_dir="${resolved%/*}"
+    else
+      libexec_dir="$(cd "${tlenv_bin%/*}/${resolved%/*}" && pwd)"
+    fi
+  else
+    # no readlink available; assume tlenv project layout
+    libexec_dir="${tlenv_bin%/*}"
+    if [[ $libexec_dir == */* ]]; then
+      libexec_dir="${libexec_dir%/*}/libexec"
+    else
+      libexec_dir="${PWD}/libexec"
+    fi
+  fi
+else
+  libexec_dir="${tlenv_bin%/*}"
+  [[ $libexec_dir != "." ]] || libexec_dir="$PWD"
+fi
+
+for plugin_bin in "${TLENV_ROOT}/plugins/"*/bin; do
+  PATH="${plugin_bin}:${PATH}"
+done
+export PATH="${libexec_dir}:${PATH}"
+
+TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${TLENV_ROOT}/tlenv.d"
+if [ ! "${libexec_dir%/*}"/tlenv.d -ef "$TLENV_ROOT"/tlenv.d ]; then
+  # Add tlenv's own `tlenv.d` unless tlenv was cloned to TLENV_ROOT
+  TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${libexec_dir%/*}/tlenv.d"
+fi
+TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:/usr/local/etc/tlenv.d:/etc/tlenv.d:/usr/lib/tlenv/hooks"
+for plugin_hook in "${TLENV_ROOT}/plugins/"*/etc/tlenv.d; do
+  TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${plugin_hook}"
+done
+TLENV_HOOK_PATH="${TLENV_HOOK_PATH#:}"
+export TLENV_HOOK_PATH
+
+shopt -u nullglob
+
+
+command="$1"
+case "$command" in
+"" )
+  { tlenv---version
+    tlenv-help
+  } | abort
+  ;;
+-v | --version )
+  exec tlenv---version
+  ;;
+-h | --help )
+  exec tlenv-help
+  ;;
+* )
+  command_path="$(type -P "tlenv-$command" || true)"
+  if [ -z "$command_path" ]; then
+    if [ "$command" == "shell" ]; then
+      abort "shell integration not enabled. Run \`tlenv init' for instructions."
+    else
+      abort "no such command \`$command'"
+    fi
+  fi
+
+  shift 1
+  if [ "$1" = --help ]; then
+    if [[ "$command" == "sh-"* ]]; then
+      echo "tlenv help \"$command\""
+    else
+      exec tlenv-help "$command"
+    fi
+  else
+    exec "$command_path" "$@"
+  fi
+  ;;
+esac
