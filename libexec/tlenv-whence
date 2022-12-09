@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Summary: List all TeX Live versions that contain the given executable
+# Usage: tlenv whence [--path] <command>
+
+set -e
+[ -n "$TLENV_DEBUG" ] && set -x
+
+# Provide tlenv completions
+if [ "$1" = "--complete" ]; then
+  echo --path
+  exec tlenv-shims --short
+fi
+
+if [ "$1" = "--path" ]; then
+  print_paths="1"
+  shift
+else
+  print_paths=""
+fi
+
+whence() {
+  local command="$1"
+  tlenv-versions --bare | while read -r version; do
+    path="$(tlenv-prefix "$version")/bin/${command}"
+    if [ -x "$path" ]; then
+      [ "$print_paths" ] && echo "$path" || echo "$version"
+    fi
+  done
+}
+
+TLENV_COMMAND="$1"
+if [ -z "$TLENV_COMMAND" ]; then
+  tlenv-help --usage whence >&2
+  exit 1
+fi
+
+result="$(whence "$TLENV_COMMAND")"
+[ -n "$result" ] && echo "$result"
