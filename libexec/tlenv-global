@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# Summary: Set or show the global TeX Live version
+#
+# Usage: tlenv global <version>
+#
+# Sets the global TeX Live version. You can override the global version at
+# any time by setting a directory-specific version with `tlenv local'
+# or by setting the `TLENV_VERSION' environment variable.
+#
+# <version> should be a string matching a TeX Live version known to tlenv.
+# The special version string `system' will use your default system TeX Live.
+# Run `tlenv versions' for a list of available TeX Live versions.
+
+set -e
+[ -n "$TLENV_DEBUG" ] && set -x
+
+# Provide tlenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec tlenv-versions --bare
+fi
+
+TLENV_VERSION="$1"
+TLENV_VERSION_FILE="${TLENV_ROOT}/version"
+
+if [ -n "$TLENV_VERSION" ]; then
+  tlenv-version-file-write "$TLENV_VERSION_FILE" "$TLENV_VERSION"
+else
+  tlenv-version-file-read "$TLENV_VERSION_FILE" || echo system
+fi
