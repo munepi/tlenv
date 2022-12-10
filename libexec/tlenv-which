@@ -35,12 +35,14 @@ if [ -z "$TLENV_COMMAND" ]; then
 fi
 
 TLENV_VERSION="${TLENV_VERSION:-$(tlenv-version-name)}"
+TLENV_ARCH=
 
 if [ "$TLENV_VERSION" = "system" ]; then
   PATH="$(remove_from_path "${TLENV_ROOT}/shims")" \
     TLENV_COMMAND_PATH="$(command -v "$TLENV_COMMAND" || true)"
 else
-  TLENV_COMMAND_PATH="${TLENV_ROOT}/versions/${TLENV_VERSION}/bin/${TLENV_COMMAND}"
+  TLENV_ARCH=$(find ${TLENV_ROOT}/versions/${TLENV_VERSION}/bin/ -type d -maxdepth 1|grep '//'|sed "s,.*/,,")
+  TLENV_COMMAND_PATH="${TLENV_ROOT}/versions/${TLENV_VERSION}/bin/${TLENV_ARCH}/${TLENV_COMMAND}"
 fi
 
 if [[ ! -x "$TLENV_COMMAND_PATH" && -n "$GEM_HOME" && -x "${GEM_HOME}/bin/${TLENV_COMMAND}" ]]; then

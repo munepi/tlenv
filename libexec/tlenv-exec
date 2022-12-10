@@ -11,7 +11,7 @@
 #   tlenv exec tlmgr update --self --all
 #
 # is equivalent to:
-#   PATH="$TLENV_ROOT/versions/1.9.3-p327/bin:$PATH" bundle install
+#   PATH="$TLENV_ROOT/versions/2021/bin/<arch>:$PATH" tlmgr update --self --all
 
 set -e
 [ -n "$TLENV_DEBUG" ] && set -x

@@ -20,8 +20,10 @@ fi
 
 whence() {
   local command="$1"
+  local arch
   tlenv-versions --bare | while read -r version; do
-    path="$(tlenv-prefix "$version")/bin/${command}"
+    arch=$(find $(tlenv-prefix "$version")/bin/ -type d -maxdepth 1|grep '//'|sed "s,.*/,,")
+    path="$(tlenv-prefix "$version")/bin/${arch}/${command}"
     if [ -x "$path" ]; then
       [ "$print_paths" ] && echo "$path" || echo "$version"
     fi

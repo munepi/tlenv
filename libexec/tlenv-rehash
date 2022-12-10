@@ -96,10 +96,11 @@ remove_outdated_shims() {
 
 # List basenames of executables for every TeX Live version
 list_executable_names() {
-  local version file
+  local version file arch
   tlenv-versions --bare --skip-aliases | \
   while read -r version; do
-    for file in "${TLENV_ROOT}/versions/${version}/bin/"*; do
+    arch=$(find "${TLENV_ROOT}/versions/${version}/bin/" -type d -maxdepth 1|grep '//'|sed "s,.*/,,")
+    for file in "${TLENV_ROOT}/versions/${version}/bin/${arch}/"*; do
       echo "${file##*/}"
     done
   done
