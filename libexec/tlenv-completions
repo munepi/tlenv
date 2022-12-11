@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: tlenv completions <command> [<args>...]
+# Usage: tlenv completions <command> [arg1 arg2...]
 
 set -e
 [ -n "$TLENV_DEBUG" ] && set -x
@@ -15,7 +15,7 @@ if [ "$COMMAND" = "--complete" ]; then
   exec tlenv-commands
 fi
 
-COMMAND_PATH="$(type -P "tlenv-$COMMAND" "tlenv-sh-$COMMAND" | head -n1)"
+COMMAND_PATH="$(command -v "tlenv-$COMMAND" || command -v "tlenv-sh-$COMMAND")"
 
 # --help is provided automatically
 echo --help
