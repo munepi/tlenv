@@ -1,28 +1,19 @@
 #!/usr/bin/env bash
-# Usage: tlenv version-file [<dir>]
-# Summary: Detect the file that sets the current tlenv version
+# Usage: tlenv version-file-write <file> <version>
+
 set -e
 [ -n "$TLENV_DEBUG" ] && set -x
 
-target_dir="$1"
+TLENV_VERSION_FILE="$1"
+TLENV_VERSION="$2"
 
-find_local_version_file() {
-  local root="$1"
-  while ! [[ "$root" =~ ^//[^/]*$ ]]; do
-    if [ -s "${root}/.texlive-version" ]; then
-      echo "${root}/.texlive-version"
-      return 0
-    fi
-    [ -n "$root" ] || break
-    root="${root%/*}"
-  done
-  return 1
-}
-
-if [ -n "$target_dir" ]; then
-  find_local_version_file "$target_dir"
-else
-  find_local_version_file "$TLENV_DIR" || {
-    [ "$TLENV_DIR" != "$PWD" ] && find_local_version_file "$PWD"
-  } || echo "${TLENV_ROOT}/version"
+if [ -z "$TLENV_VERSION" ] || [ -z "$TLENV_VERSION_FILE" ]; then
+  tlenv-help --usage version-file-write >&2
+  exit 1
 fi
+
+# Make sure the specified version is installed.
+tlenv-prefix "$TLENV_VERSION" >/dev/null
+
+# Write the version out to disk.
+echo "$TLENV_VERSION" > "$TLENV_VERSION_FILE"
