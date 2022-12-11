@@ -1,0 +1,1 @@
+install_texlive "2017" "http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2017/tlnet-final//install-tl-unx.tar.gz#fabdf9d625d76c9a54e023c7a0d1b74c6e0fd72c29ef452116409a3ce5b2b5ea1f1a2d0b96e7db95a13ca1d2d3d4b657b9f86f777c88cfe631328a9f959c6e30" --repository http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2017/tlnet-final/
