@@ -45,13 +45,10 @@ else
   TLENV_COMMAND_PATH="${TLENV_ROOT}/versions/${TLENV_VERSION}/bin/${TLENV_ARCH}/${TLENV_COMMAND}"
 fi
 
-if [[ ! -x "$TLENV_COMMAND_PATH" && -n "$GEM_HOME" && -x "${GEM_HOME}/bin/${TLENV_COMMAND}" ]]; then
-  TLENV_COMMAND_PATH="${GEM_HOME}/bin/${TLENV_COMMAND}"
-fi
-
-IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks which)" || true
+OLDIFS="$IFS"
+IFS=$'\n' scripts=(`tlenv-hooks which`)
+IFS="$OLDIFS"
 for script in "${scripts[@]}"; do
-  # shellcheck disable=SC1090
   source "$script"
 done
 
