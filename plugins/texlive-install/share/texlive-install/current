@@ -1,0 +1,1 @@
+install_texlive "current" "https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz" --repository https://mirror.ctan.org/systems/texlive/tlnet/
