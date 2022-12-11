@@ -38,14 +38,15 @@ remove_prototype_shim() {
 # absolute path to the tlenv executable itself.
 tlenv_path() {
   local found
-  found="$(PATH="$TLENV_ORIG_PATH" type -P tlenv)"
+  found="$(PATH="$TLENV_ORIG_PATH" command -v tlenv)"
   if [[ $found == /* ]]; then
     echo "$found"
   elif [[ -n "$found" ]]; then
     echo "$PWD/${found#./}"
   else
     # Assume tlenv isn't in PATH.
-    echo "${BASH_SOURCE%/*}/tlenv"
+    local here="${BASH_SOURCE%/*}"
+    echo "${here%/*}/bin/tlenv"
   fi
 }
 
@@ -104,11 +105,6 @@ list_executable_names() {
       echo "${file##*/}"
     done
   done
-  if [ -n "$GEM_HOME" ]; then
-    for file in "$GEM_HOME"/bin/*; do
-      echo "${file##*/}"
-    done
-  fi
 }
 
 # The basename of each argument passed to `make_shims` will be
@@ -160,9 +156,11 @@ remove_outdated_shims
 registered_shims=( $(list_executable_names | sort -u) )
 
 # Allow plugins to register shims.
-IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks rehash)" || true
+OLDIFS="$IFS"
+IFS=$'\n' scripts=(`tlenv-hooks rehash`)
+IFS="$OLDIFS"
+
 for script in "${scripts[@]}"; do
-  # shellcheck disable=SC1090
   source "$script"
 done
 
