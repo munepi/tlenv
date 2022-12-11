@@ -41,14 +41,7 @@ if [ -z "$shell" ]; then
   shell="${shell%%-*}"
 fi
 
-root="${BASH_SOURCE:-$0}"
-root="${root%/*}"
-root="${root%/*}"
-
-tlenv_in_path=true
-if [ -n "$TLENV_ORIG_PATH" ]; then
-  PATH="$TLENV_ORIG_PATH" type -P tlenv >/dev/null || tlenv_in_path=""
-fi
+root="${0%/*}/.."
 
 if [ -z "$print" ]; then
   case "$shell" in
@@ -73,27 +66,17 @@ if [ -z "$print" ]; then
     ;;
   esac
 
-  tlenv_command=tlenv
-  if [ -z "$tlenv_in_path" ]; then
-    tlenv_command="$root/bin/tlenv"
-    tlenv_command="${tlenv_command/$HOME\//~/}"
-  fi
-
-  { echo "# Please add the following line to your \`${profile}' file,"
-    echo "# then restart your terminal."
+  { echo "# Load tlenv automatically by appending"
+    echo "# the following to ${profile}:"
     echo
-    [ -t 2 ] && printf '\e[33;1m'
     case "$shell" in
     fish )
-      printf 'status --is-interactive; and %s init - fish | source' "$tlenv_command"
+      echo 'status --is-interactive; and tlenv init - fish | source'
       ;;
     * )
-      # shellcheck disable=SC2016
-      printf 'eval "$(%s init - %s)"' "$tlenv_command" "$shell"
+      printf 'eval "$(tlenv init - %s)"\n' "$shell"
       ;;
     esac
-    [ -t 2 ] && printf '\e[m'
-    echo
     echo
   } >&2
 
@@ -104,20 +87,16 @@ mkdir -p "${TLENV_ROOT}/"{shims,versions}
 
 case "$shell" in
 fish )
-  [ -n "$tlenv_in_path" ] || printf "set -gx PATH '%s/bin' \$PATH\n" "$root"
-  printf "set -gx PATH '%s/shims' \$PATH\n" "$TLENV_ROOT"
-  printf 'set -gx TLENV_SHELL %s\n' "$shell"
+  echo "set -gx PATH '${TLENV_ROOT}/shims' \$PATH"
+  echo "set -gx TLENV_SHELL $shell"
 ;;
 * )
-  # shellcheck disable=SC2016
-  [ -n "$tlenv_in_path" ] || printf 'export PATH="%s/bin:${PATH}"\n' "$root"
-  # shellcheck disable=SC2016
-  printf 'export PATH="%s/shims:${PATH}"\n' "$TLENV_ROOT"
-  printf 'export TLENV_SHELL=%s\n' "$shell"
+  echo 'export PATH="'${TLENV_ROOT}'/shims:${PATH}"'
+  echo "export TLENV_SHELL=$shell"
 
   completion="${root}/completions/tlenv.${shell}"
   if [ -r "$completion" ]; then
-    printf "source '%s'\n" "$completion"
+    echo "source '$completion'"
   fi
 ;;
 esac
@@ -126,8 +105,7 @@ if [ -z "$no_rehash" ]; then
   echo 'command tlenv rehash 2>/dev/null'
 fi
 
-IFS=$'\n' read -d '' -r -a commands <<<"$(tlenv-commands --sh)" || true
-
+commands=(`tlenv-commands --sh`)
 case "$shell" in
 fish )
   cat <<EOS
