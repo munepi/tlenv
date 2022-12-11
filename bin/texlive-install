@@ -184,7 +184,7 @@ install_texlive() {
                "TEXMFHOME       ${PREFIX_PATH}/texmf-local"  \
                "TEXMFVAR        ${PREFIX_PATH}/texmf-var"    \
                "TEXMFCONFIG     ${PREFIX_PATH}/texmf-config" \
-               "selected_scheme scheme-minimal" \
+               "selected_scheme scheme-basic" \
                "binary_${texlive_arch}  1" \
                "option_adjustrepo       0" \
                "option_autobackup       0" \
