@@ -4,8 +4,8 @@
 #
 # Usage: tlenv exec <command> [arg1 arg2...]
 #
-# Runs an executable by first preparing PATH so that the selected
-# TeX Live version's `bin' directory is at the front.
+# Runs an executable by first preparing PATH so that the selected TeX Live
+# version's `bin' directory is at the front.
 #
 # For example, if the currently selected TeX Live version is 2021:
 #   tlenv exec tlmgr update --self --all
@@ -33,9 +33,10 @@ export TLENV_VERSION
 TLENV_COMMAND_PATH="$(tlenv-which "$TLENV_COMMAND")"
 TLENV_BIN_PATH="${TLENV_COMMAND_PATH%/*}"
 
-IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks exec)" || true
+OLDIFS="$IFS"
+IFS=$'\n' scripts=(`tlenv-hooks exec`)
+IFS="$OLDIFS"
 for script in "${scripts[@]}"; do
-  # shellcheck disable=SC1090
   source "$script"
 done
 
