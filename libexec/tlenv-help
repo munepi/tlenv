@@ -23,7 +23,7 @@ fi
 
 command_path() {
   local command="$1"
-  type -P tlenv-"$command" tlenv-sh-"$command" | head -n1
+  command -v tlenv-"$command" || command -v tlenv-sh-"$command" || true
 }
 
 extract_initial_comment_block() {
@@ -43,7 +43,7 @@ extract_initial_comment_block() {
 
 collect_documentation() {
   local awk
-  awk="$(type -P gawk)" || awk="$(type -P awk)" || true
+  awk="$(type -p gawk awk 2>/dev/null | head -n1)"
   if [ -z "$awk" ]; then
     echo "tlenv: cannot find awk" >&2
     return 1
@@ -154,11 +154,8 @@ if [ "$1" = "--usage" ]; then
 fi
 
 if [ -z "$1" ] || [ "$1" == "tlenv" ]; then
-  if [ -z "$usage" ] && [ -t 1 ] && type -P man >/dev/null; then
-    MANPATH="${BASH_SOURCE%/*}/../share/man:$MANPATH" exec man tlenv
-  fi
-  echo "Usage: tlenv <command> [<args>...]"
-  [ -n "$usage" ] && exit
+  echo "Usage: tlenv <command> [<args>]"
+  [ -z "$usage" ] || exit
   echo
   echo "Some useful tlenv commands are:"
   print_summaries commands local global shell install uninstall rehash version versions which whence
