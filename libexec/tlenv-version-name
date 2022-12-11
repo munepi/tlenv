@@ -8,9 +8,10 @@ if [ -z "$TLENV_VERSION" ]; then
   TLENV_VERSION="$(tlenv-version-file-read "$TLENV_VERSION_FILE" || true)"
 fi
 
-IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks version-name)" || true
+OLDIFS="$IFS"
+IFS=$'\n' scripts=(`tlenv-hooks version-name`)
+IFS="$OLDIFS"
 for script in "${scripts[@]}"; do
-  # shellcheck disable=SC1090
   source "$script"
 done
 
@@ -26,8 +27,6 @@ version_exists() {
 
 if version_exists "$TLENV_VERSION"; then
   echo "$TLENV_VERSION"
-# elif version_exists "${TLENV_VERSION#texlive-}"; then
-#   echo "${TLENV_VERSION#texlive-}"
 else
   echo "tlenv: version \`$TLENV_VERSION' is not installed (set by $(tlenv-version-origin))" >&2
   exit 1
