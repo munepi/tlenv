@@ -168,12 +168,19 @@ num_cpu_cores() {
 
 install_texlive() {
     local texlive_version=$1
-    local texlive_install_tl_unx_tarball=$2
+    local texlive_install_tlnet=$2
+    local texlive_install_tl_unx_tarball=$3   ##<= install-tl-unx.tar.gz#<sha256 or sha512>
+    local texlive_install_tl_unx
     local texlive_arch install_tl_opts
-    shift 2
+    shift 3
 
     pushd "$BUILD_PATH" >&4
-        fetch_tarball install-tl-unx ${texlive_install_tl_unx_tarball}
+        if [ "${TEXLIVE_INSTALL_TLNET}" ]; then
+            texlive_install_tlnet=${TEXLIVE_INSTALL_TLNET}
+        fi
+        texlive_install_tl_unx=${texlive_install_tlnet}${texlive_install_tl_unx_tarball}
+        fetch_tarball install-tl-unx ${texlive_install_tl_unx}
+
         if [ "${TEXLIVE_INSTALL_PLATFORM}" ]; then
             texlive_arch=${TEXLIVE_INSTALL_PLATFORM}
             install_tl_opts="-force-platform ${TEXLIVE_INSTALL_PLATFORM}"
@@ -203,6 +210,7 @@ install_texlive() {
                > ./install-tl-unx/texlive.profile && \
             ./install-tl-unx/install-tl \
                 -profile ./install-tl-unx/texlive.profile \
+                -repository ${texlive_install_tlnet} \
                 ${install_tl_opts} $@
         popd >&4
 
@@ -771,6 +779,7 @@ else
 fi
 
 TEXLIVE_INSTALL_PLATFORM=${TEXLIVE_INSTALL_PLATFORM:-}
+TEXLIVE_INSTALL_TLNET=${TEXLIVE_INSTALL_TLNET:-}
 
 trap build_failed ERR
 mkdir -p "$BUILD_PATH"
