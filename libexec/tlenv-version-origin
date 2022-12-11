@@ -5,9 +5,10 @@ set -e
 
 unset TLENV_VERSION_ORIGIN
 
-IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks version-origin)" || true
+OLDIFS="$IFS"
+IFS=$'\n' scripts=(`tlenv-hooks version-origin`)
+IFS="$OLDIFS"
 for script in "${scripts[@]}"; do
-  # shellcheck disable=SC1090
   source "$script"
 done
 
