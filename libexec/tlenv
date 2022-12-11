@@ -20,6 +20,37 @@ abort() {
   exit 1
 }
 
+if enable -f "${BASH_SOURCE%/*}"/../libexec/tlenv-realpath.dylib realpath 2>/dev/null; then
+  abs_dirname() {
+    local path
+    path="$(realpath "$1")"
+    echo "${path%/*}"
+  }
+else
+  [ -z "$TLENV_NATIVE_EXT" ] || abort "failed to load \`realpath' builtin"
+
+  READLINK=$(type -p greadlink readlink 2>/dev/null | head -n1)
+  [ -n "$READLINK" ] || abort "cannot find readlink - are you missing GNU coreutils?"
+
+  resolve_link() {
+    $READLINK "$1"
+  }
+
+  abs_dirname() {
+    local cwd="$PWD"
+    local path="$1"
+
+    while [ -n "$path" ]; do
+      cd "${path%/*}"
+      local name="${path##*/}"
+      path="$(resolve_link "$name" || true)"
+    done
+
+    pwd
+    cd "$cwd"
+  }
+fi
+
 if [ -z "${TLENV_ROOT}" ]; then
   TLENV_ROOT="${HOME}/.tlenv"
 else
@@ -41,39 +72,16 @@ export TLENV_DIR
 
 shopt -s nullglob
 
-tlenv_bin="${BASH_SOURCE:-$0}"
-if [ -L "$tlenv_bin" ]; then
-  # resolve tlenv symlink to find out where the actual libexec directory is
-  if readlink="$(type -P greadlink)" || readlink="$(type -P readlink)"; then
-    resolved="$("$readlink" "$tlenv_bin" 2>/dev/null)"
-    if [[ $resolved == /* ]]; then
-      libexec_dir="${resolved%/*}"
-    else
-      libexec_dir="$(cd "${tlenv_bin%/*}/${resolved%/*}" && pwd)"
-    fi
-  else
-    # no readlink available; assume tlenv project layout
-    libexec_dir="${tlenv_bin%/*}"
-    if [[ $libexec_dir == */* ]]; then
-      libexec_dir="${libexec_dir%/*}/libexec"
-    else
-      libexec_dir="${PWD}/libexec"
-    fi
-  fi
-else
-  libexec_dir="${tlenv_bin%/*}"
-  [[ $libexec_dir != "." ]] || libexec_dir="$PWD"
-fi
-
+bin_path="$(abs_dirname "$0")"
 for plugin_bin in "${TLENV_ROOT}/plugins/"*/bin; do
   PATH="${plugin_bin}:${PATH}"
 done
-export PATH="${libexec_dir}:${PATH}"
+export PATH="${bin_path}:${PATH}"
 
 TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${TLENV_ROOT}/tlenv.d"
-if [ ! "${libexec_dir%/*}"/tlenv.d -ef "$TLENV_ROOT"/tlenv.d ]; then
+if [ "${bin_path%/*}" != "$TLENV_ROOT" ]; then
   # Add tlenv's own `tlenv.d` unless tlenv was cloned to TLENV_ROOT
-  TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${libexec_dir%/*}/tlenv.d"
+  TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${bin_path%/*}/tlenv.d"
 fi
 TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:/usr/local/etc/tlenv.d:/etc/tlenv.d:/usr/lib/tlenv/hooks"
 for plugin_hook in "${TLENV_ROOT}/plugins/"*/etc/tlenv.d; do
@@ -99,7 +107,7 @@ case "$command" in
   exec tlenv-help
   ;;
 * )
-  command_path="$(type -P "tlenv-$command" || true)"
+  command_path="$(command -v "tlenv-$command" || true)"
   if [ -z "$command_path" ]; then
     if [ "$command" == "shell" ]; then
       abort "shell integration not enabled. Run \`tlenv init' for instructions."
