@@ -1,6 +1,6 @@
-# tlenv: A version manager tool for TeX Live on Unix-like systems
+# tlenv: TeX Live version manager tool on Unix-like systems
 
-[TeX Live](https://tug.org/texlive/) version manager inspired by [rbenv](https://github.com/rbenv/rbenv)
+[TeX Live](https://tug.org/texlive/) version manager tool inspired by [rbenv](https://github.com/rbenv/rbenv)
 
 
 ## Getting started
