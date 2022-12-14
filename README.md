@@ -47,7 +47,7 @@ Enjoy Happy TeXing!
 * [texlive-install](https://github.com/munepi/tlenv-texlive-install): TeX Live installation
 * [texlive-install-darwin](https://github.com/munepi/tlenv-texlive-install-darwin): TeX Live installation for macOS (Darwin)
 * [shared-texmflocal](https://github.com/munepi/tlenv-shared-texmflocal): shared TEXMFLOCAL
-* [tlnet-texjporg](https://github.com/munepi/tlenv-tlnet-texjporg): setup tlnet on [texlive.texjp.org](https://texlive.texjp.org/)
+* [tlnet-texjporg](https://github.com/munepi/tlenv-tlnet-texjporg): setup tlnet on [texlive.texjp.org](https://texlive.texjp.org/) for the previous TeX Live versions
 
 
 ## License
