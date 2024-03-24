@@ -33,7 +33,7 @@ tlenv install current
 
 ...
 
-Installed current to /Users/munepi/.tlenv/versions/current
+Installed current to /Users/<your account>/.tlenv/versions/current
 
 
 NOTE: to activate this TeX Live version as the new default, run: tlenv global current
