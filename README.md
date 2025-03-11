@@ -42,6 +42,25 @@ NOTE: to activate this TeX Live version as the new default, run: tlenv global cu
 Enjoy Happy TeXing!
 
 
+## Installing previous TeX Live versions
+
+You can install TeX Live from previous versions, such as TeX Live 2010 frozen, up to the latest version.
+
+For example, if you use TeX Live `YYYY` (year) frozen, then you can install TeX Live `YYYY` by executing the following.
+
+``` shell
+tlenv install YYYY
+```
+
+Additionally, you can specify other mirror historic archive for the environment variable `TEXLIVE_INSTALL_TLNET` as shown below.
+
+``` shell
+TEXLIVE_INSTALL_TLNET=https://<MIRROR HISTORIC ARCHIVE>/systems/texlive/YYYY/tlnet-final/ tlenv install YYYY
+```
+
+The list of TUG official mirrors are [Historic archive of TeX material - TeX Users Group](https://tug.org/historic/).
+
+
 ## Plugins
 
 * [texlive-install](https://github.com/munepi/tlenv-texlive-install): TeX Live installation
