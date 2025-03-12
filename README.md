@@ -65,9 +65,9 @@ The list of TUG official mirrors are [Historic archive of TeX material - TeX Use
 
 * [texlive-install](https://github.com/munepi/tlenv-texlive-install): TeX Live installation
 * [texlive-install-darwin](https://github.com/munepi/tlenv-texlive-install-darwin): TeX Live installation for macOS (Darwin)
+* [texlive-install-haranoajifonts](https://github.com/munepi/tlenv-texlive-install-haranoajifonts): install the latest HaranoAjiFonts when installing TeX Live
 * [shared-texmflocal](https://github.com/munepi/tlenv-shared-texmflocal): shared TEXMFLOCAL
 * [tlnet-texjporg](https://github.com/munepi/tlenv-tlnet-texjporg): setup tlnet on [texlive.texjp.org](https://texlive.texjp.org/) for the previous TeX Live versions
-
 
 ## License
 
