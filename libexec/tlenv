@@ -7,7 +7,7 @@ if [ "$1" = "--debug" ]; then
 fi
 
 if [ -n "$TLENV_DEBUG" ]; then
-  # https://wiki-dev.bash-hackers.org/scripting/debuggingtips#making_xtrace_more_useful
+  # https://web.archive.org/web/20221105082147/https://wiki-dev.bash-hackers.org/scripting/debuggingtips#making_xtrace_more_useful
   export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
   set -x
 fi
@@ -19,37 +19,6 @@ abort() {
   } >&2
   exit 1
 }
-
-if enable -f "${BASH_SOURCE%/*}"/../libexec/tlenv-realpath.dylib realpath 2>/dev/null; then
-  abs_dirname() {
-    local path
-    path="$(realpath "$1")"
-    echo "${path%/*}"
-  }
-else
-  [ -z "$TLENV_NATIVE_EXT" ] || abort "failed to load \`realpath' builtin"
-
-  READLINK=$(type -p greadlink readlink 2>/dev/null | head -n1)
-  [ -n "$READLINK" ] || abort "cannot find readlink - are you missing GNU coreutils?"
-
-  resolve_link() {
-    $READLINK "$1"
-  }
-
-  abs_dirname() {
-    local cwd="$PWD"
-    local path="$1"
-
-    while [ -n "$path" ]; do
-      cd "${path%/*}"
-      local name="${path##*/}"
-      path="$(resolve_link "$name" || true)"
-    done
-
-    pwd
-    cd "$cwd"
-  }
-fi
 
 if [ -z "${TLENV_ROOT}" ]; then
   TLENV_ROOT="${HOME}/.tlenv"
@@ -70,20 +39,50 @@ export TLENV_DIR
 
 [ -n "$TLENV_ORIG_PATH" ] || export TLENV_ORIG_PATH="$PATH"
 
+canonicalize() {
+  local readlink resolved_path
+  if readlink="$(type -P greadlink)" || readlink="$(type -P readlink)"; then
+    # happy path: GNU & BSD readlink, macOS 12.3+
+    if resolved_path="$("$readlink" -f "$1" 2>/dev/null)"; then
+      printf "%s\n" "$resolved_path"
+      return 0
+    fi
+    # likely macOS < 12.3 with old readlink
+    local path="$1"
+    while [ -L "$path" ]; do
+      resolved_path="$("$readlink" "$path" 2>/dev/null)"
+      [[ $resolved_path == /* ]] || resolved_path="$(cd "${path%/*}/${resolved_path%/*}" && pwd)/${resolved_path##*/}"
+      path="$resolved_path"
+    done
+    printf "%s\n" "$path"
+    return 0
+  fi
+  # fail if the argument is a symlink and was not canonicalized
+  [ ! -L "$1" ] || return 1
+}
+
 shopt -s nullglob
 
-bin_path="$(abs_dirname "$0")"
+# all this trouble just to find out where tlenv's executables live
+tlenv_bin="${BASH_SOURCE:-$0}"
+if libexec_dir="$(canonicalize "$tlenv_bin")"; then
+  libexec_dir="${libexec_dir%/*}"
+else
+  libexec_dir="${tlenv_bin%/*}"
+  [ "$libexec_dir" != "." ] || libexec_dir="$PWD"
+fi
+
 for plugin_bin in "${TLENV_ROOT}/plugins/"*/bin; do
   PATH="${plugin_bin}:${PATH}"
 done
-export PATH="${bin_path}:${PATH}"
+export PATH="${libexec_dir}:${PATH}"
 
 TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${TLENV_ROOT}/tlenv.d"
-if [ "${bin_path%/*}" != "$TLENV_ROOT" ]; then
+if [ ! "${libexec_dir%/*}"/tlenv.d -ef "$TLENV_ROOT"/tlenv.d ]; then
   # Add tlenv's own `tlenv.d` unless tlenv was cloned to TLENV_ROOT
-  TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${bin_path%/*}/tlenv.d"
+  TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${libexec_dir%/*}/tlenv.d"
 fi
-TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:/usr/local/etc/tlenv.d:/etc/tlenv.d:/usr/lib/tlenv/hooks"
+TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:/usr/etc/tlenv.d:/usr/local/etc/tlenv.d:/etc/tlenv.d:/usr/lib/tlenv/hooks"
 for plugin_hook in "${TLENV_ROOT}/plugins/"*/etc/tlenv.d; do
   TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${plugin_hook}"
 done
@@ -107,7 +106,7 @@ case "$command" in
   exec tlenv-help
   ;;
 * )
-  command_path="$(command -v "tlenv-$command" || true)"
+  command_path="$(type -P "tlenv-$command" || true)"
   if [ -z "$command_path" ]; then
     if [ "$command" == "shell" ]; then
       abort "shell integration not enabled. Run \`tlenv init' for instructions."
