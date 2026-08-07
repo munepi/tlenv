@@ -1,0 +1,85 @@
+= tlenv(1)
+Munehiro Yamamoto
+:doctype: manpage
+:man manual: Tlenv Manual
+:man source: tlenv {version}
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlenv - manage your TeX Live environment
+
+== Synopsis
+
+*tlenv* _<command>_ [_<args>_...]
+
+== Description
+
+tlenv respects the _.texlive-version_ file in a project directory by making sure that any *tlmgr*, *tex*, *latex*, or other TeX Live command invocation automatically invokes the TeX Live version configured for that project.
+
+It does so by generating shims for all TeX Live executables. As long as tlenv shims directory is prepended to PATH, tlenv automatically ensures transparent switching between TeX Live versions.
+
+tlenv looks for available TeX Live versions in the _$TLENV_ROOT/versions_ directory. Since TeX Live keeps its executables in a platform-specific subdirectory, the actual programs are found under _$TLENV_ROOT/versions/<version>/bin/<platform>_.
+
+== Commands
+
+*tlenv global* [_<version>_]::
+  View or change the global TeX Live version
+
+*tlenv local* [_<version>_]::
+  View or change the local TeX Live version
+
+*tlenv shell* [_<version>_]::
+  View or change the TeX Live version for the current shell session
+
+*tlenv version*::
+  View the currently active TeX Live version and where it is set from
+
+*tlenv versions*::
+  List all locally installed TeX Live versions known to tlenv
+
+*tlenv install* [_<version>_]::
+  (Provided by the *texlive-install* plugin) Download and install a new TeX Live version
+
+*tlenv rehash*::
+  Regenerate shims for all known TeX Live executables
+
+*tlenv which* [_<command>_]::
+  View the executable path that a command resolves to
+
+*tlenv init*::
+  Help bootstrap tlenv into the current shell environment
+
+*tlenv help* [_<command>_]::
+  View help text for any tlenv command
+
+== Environment Variables
+
+*TLENV_VERSION* (default: read from _.texlive-version_ file)::
+  The TeX Live version name to be used
+
+*TLENV_ROOT* (default: _~/.tlenv_)::
+  The location where tlenv discovers TeX Live versions, plugins, and other configuration
+
+*TLENV_DEBUG*::
+  Activates printing debug information about tlenv internals to standard error
+
+*TLENV_HOOK_PATH*::
+  Colon-separated list of paths searched for tlenv plugin scripts
+
+*TLENV_DIR* (default: _$PWD_)::
+  Directory to traverse bottom-up to locate the _.texlive-version_ file
+
+== Plugins
+
+As its core functionality, tlenv only switches between TeX Live versions and does nothing else, but offers a plugin mechanism to hook into and override almost any aspect of its default behavior.
+
+The most common plugin for tlenv is *texlive-install* which facilitates installing new TeX Live versions into the _$TLENV_ROOT/versions_ directory.
+
+== Notes
+
+* https://github.com/munepi/tlenv
+
+* https://github.com/munepi/tlenv-texlive-install#readme
+
+* https://tug.org/texlive/

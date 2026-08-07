@@ -2,6 +2,11 @@
 
 [TeX Live](https://tug.org/texlive/) version manager tool inspired by [rbenv](https://github.com/rbenv/rbenv)
 
+tlenv is a port of rbenv; this release tracks [rbenv v1.3.2](https://github.com/rbenv/rbenv/releases/tag/v1.3.2).
+
+Run `tlenv help` for the manual page, or `tlenv help <command>` for help on a
+specific command.
+
 
 ## Getting started
 
@@ -21,9 +26,38 @@ git clone https://github.com/munepi/tlenv-texlive-install-darwin.git  plugins/te
 
 ### 2. Setup tlenv
 
+Run `tlenv init` and it will append the necessary line to the startup file of
+your shell:
+
+``` shell
+~/.tlenv/bin/tlenv init
+```
+
+`tlenv init` detects the current shell by inspecting the parent process. You
+can also name the shells explicitly, for example `tlenv init bash zsh fish`.
+Restart your shell afterwards so that the changes take effect.
+
+If you prefer to configure your shell by hand, add the following instead:
+
 ``` shell
 export PATH=~/.tlenv/bin:${PATH}
-if which tlenv > /dev/null; then eval "$(tlenv init -)"; fi
+eval "$(tlenv init - bash)"   # replace `bash' with the name of your shell
+```
+
+#### Shell completions
+
+The **bash** completion script ships with tlenv and is loaded by the
+`tlenv init` mechanism.
+
+The **zsh** completion script also ships with tlenv, but it needs to be added
+to `FPATH` before zsh can discover it. One way to do this is to edit
+`~/.zshrc`:
+
+``` shell
+FPATH=~/.tlenv/completions:"$FPATH"
+
+autoload -Uz compinit
+compinit
 ```
 
 ### 3. Try to install the latest TeX Live version

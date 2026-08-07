@@ -23,7 +23,7 @@ fi
 
 command_path() {
   local command="$1"
-  command -v tlenv-"$command" || command -v tlenv-sh-"$command" || true
+  type -P tlenv-"$command" tlenv-sh-"$command" | head -n1
 }
 
 extract_initial_comment_block() {
@@ -43,7 +43,7 @@ extract_initial_comment_block() {
 
 collect_documentation() {
   local awk
-  awk="$(type -p gawk awk 2>/dev/null | head -n1)"
+  awk="$(type -P gawk)" || awk="$(type -P awk)" || true
   if [ -z "$awk" ]; then
     echo "tlenv: cannot find awk" >&2
     return 1
@@ -144,8 +144,40 @@ print_usage() {
   local command="$1"
   local summary usage help
   eval "$(documentation_for "$command")"
-  [ -z "$usage" ] || echo "$usage"
+  if [ -n "$usage" ]; then
+    echo "$usage"
+  else
+    echo "Usage: tlenv ${command}"
+  fi
 }
+
+if [ "$1" = "--complete-commands" ]; then
+  command_prefix="${2:-}"
+  seen=()
+  shopt -s nullglob
+  PATH_remain="$PATH"
+  # traverse PATH to find "tlenv-" prefixed commands
+  while true; do
+    path="${PATH_remain%%:*}"
+    if [ -n "$path" ]; then
+      for tlenv_command in "${path}/tlenv-"*; do
+        command_name="${tlenv_command##*/}"
+        command_name="${command_name#tlenv-}"
+        command_name="${command_name#sh-}"
+        [[ $command_name == "${command_prefix}"* ]] || continue
+        [[ " ${seen[*]} " != *" ${command_name} "* ]] || continue
+        seen+=("$command_name")
+        summary=""
+        eval "$(extract_initial_comment_block < "$tlenv_command" | collect_documentation)"
+        [ -n "$summary" ] || continue
+        printf "%s:%s\n" "$command_name" "$summary"
+      done
+    fi
+    [[ $PATH_remain == *:* ]] || break
+    PATH_remain="${PATH_remain#*:}"
+  done
+  exit 0
+fi
 
 unset usage
 if [ "$1" = "--usage" ]; then
@@ -154,11 +186,17 @@ if [ "$1" = "--usage" ]; then
 fi
 
 if [ -z "$1" ] || [ "$1" == "tlenv" ]; then
-  echo "Usage: tlenv <command> [<args>]"
-  [ -z "$usage" ] || exit
+  if [ -z "$usage" ] && [ -t 1 ] && type -P man >/dev/null; then
+    MANPATH="${BASH_SOURCE%/*}/../share/man:$MANPATH" exec man tlenv
+  fi
+  echo "Usage: tlenv <command> [<args>...]"
+  [ -n "$usage" ] && exit
   echo
-  echo "Some useful tlenv commands are:"
-  print_summaries commands local global shell install uninstall rehash version versions which whence
+  echo "Commands to manage available TeX Live versions:"
+  print_summaries versions install uninstall rehash
+  echo
+  echo "Commands to view or change the current TeX Live version:"
+  print_summaries version local global shell
   echo
   echo "See \`tlenv help <command>' for information on a specific command."
   echo "For full documentation, see: https://github.com/munepi/tlenv#readme"

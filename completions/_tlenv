@@ -1,0 +1,13 @@
+#compdef tlenv
+
+_tlenv() {
+  local completions
+
+  if [ "${#words}" -eq 2 ]; then
+    completions=(${(f)"$(tlenv help --complete-commands "${words[2]}")"})
+    _describe 'tlenv commands' completions
+  else
+    completions="$(tlenv completions ${words[2,-2]})"
+    compadd - "${(ps:\n:)completions}"
+  fi
+}
