@@ -48,6 +48,10 @@ if [ "$version" = "--unset" ]; then
     echo 'set -gu TLENV_VERSION_OLD "$TLENV_VERSION"'
     echo "set -e TLENV_VERSION"
     ;;
+  zsh )
+    echo "typeset -g TLENV_VERSION_OLD=\"\${TLENV_VERSION-}\""
+    echo "unset TLENV_VERSION"
+    ;;
   * )
     echo 'TLENV_VERSION_OLD="${TLENV_VERSION-}"'
     echo "unset TLENV_VERSION"
@@ -74,6 +78,24 @@ else
   echo "tlenv: TLENV_VERSION_OLD is not set" >&2
   false
 end
+EOS
+    ;;
+  zsh )
+    cat <<EOS
+if [ -n "\${TLENV_VERSION_OLD+x}" ]; then
+  if [ -n "\$TLENV_VERSION_OLD" ]; then
+    local TLENV_VERSION_OLD_="\$TLENV_VERSION"
+    export TLENV_VERSION="\$TLENV_VERSION_OLD"
+    TLENV_VERSION_OLD="\$TLENV_VERSION_OLD_"
+    unset TLENV_VERSION_OLD_
+  else
+    typeset -g TLENV_VERSION_OLD="\$TLENV_VERSION"
+    unset TLENV_VERSION
+  fi
+else
+  echo "tlenv: TLENV_VERSION_OLD is not set" >&2
+  false
+fi
 EOS
     ;;
   * )
@@ -105,6 +127,10 @@ if tlenv-prefix "$version" >/dev/null; then
     fish )
       echo 'set -gu TLENV_VERSION_OLD "$TLENV_VERSION"'
       echo "set -gx TLENV_VERSION \"$version\""
+      ;;
+    zsh )
+      echo "typeset -g TLENV_VERSION_OLD=\"\${TLENV_VERSION-}\""
+      echo "export TLENV_VERSION=\"$version\""
       ;;
     * )
       echo 'TLENV_VERSION_OLD="${TLENV_VERSION-}"'
