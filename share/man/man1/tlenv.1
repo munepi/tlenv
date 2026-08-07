@@ -1,0 +1,160 @@
+'\" t
+.\"     Title: tlenv
+.\"    Author: Munehiro Yamamoto
+.\" Generator: Asciidoctor 2.0.20
+.\"      Date: 2026-08-07
+.\"    Manual: Tlenv Manual
+.\"    Source: tlenv 0.2
+.\"  Language: English
+.\"
+.TH "TLENV" "1" "2026-08-07" "tlenv 0.2" "Tlenv Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+tlenv \- manage your TeX Live environment
+.SH "SYNOPSIS"
+.sp
+\fBtlenv\fP \fI<command>\fP [\fI<args>\fP...]
+.SH "DESCRIPTION"
+.sp
+tlenv respects the \fI.texlive\-version\fP file in a project directory by making sure that any \fBtlmgr\fP, \fBtex\fP, \fBlatex\fP, or other TeX Live command invocation automatically invokes the TeX Live version configured for that project.
+.sp
+It does so by generating shims for all TeX Live executables. As long as tlenv shims directory is prepended to PATH, tlenv automatically ensures transparent switching between TeX Live versions.
+.sp
+tlenv looks for available TeX Live versions in the \fI$TLENV_ROOT/versions\fP directory. Since TeX Live keeps its executables in a platform\-specific subdirectory, the actual programs are found under \fI$TLENV_ROOT/versions/<version>/bin/<platform>\fP.
+.SH "COMMANDS"
+.sp
+\fBtlenv global\fP [\fI<version>\fP]
+.RS 4
+View or change the global TeX Live version
+.RE
+.sp
+\fBtlenv local\fP [\fI<version>\fP]
+.RS 4
+View or change the local TeX Live version
+.RE
+.sp
+\fBtlenv shell\fP [\fI<version>\fP]
+.RS 4
+View or change the TeX Live version for the current shell session
+.RE
+.sp
+\fBtlenv version\fP
+.RS 4
+View the currently active TeX Live version and where it is set from
+.RE
+.sp
+\fBtlenv versions\fP
+.RS 4
+List all locally installed TeX Live versions known to tlenv
+.RE
+.sp
+\fBtlenv install\fP [\fI<version>\fP]
+.RS 4
+(Provided by the \fBtexlive\-install\fP plugin) Download and install a new TeX Live version
+.RE
+.sp
+\fBtlenv rehash\fP
+.RS 4
+Regenerate shims for all known TeX Live executables
+.RE
+.sp
+\fBtlenv which\fP [\fI<command>\fP]
+.RS 4
+View the executable path that a command resolves to
+.RE
+.sp
+\fBtlenv init\fP
+.RS 4
+Help bootstrap tlenv into the current shell environment
+.RE
+.sp
+\fBtlenv help\fP [\fI<command>\fP]
+.RS 4
+View help text for any tlenv command
+.RE
+.SH "ENVIRONMENT VARIABLES"
+.sp
+\fBTLENV_VERSION\fP (default: read from \fI.texlive\-version\fP file)
+.RS 4
+The TeX Live version name to be used
+.RE
+.sp
+\fBTLENV_ROOT\fP (default: \fI~/.tlenv\fP)
+.RS 4
+The location where tlenv discovers TeX Live versions, plugins, and other configuration
+.RE
+.sp
+\fBTLENV_DEBUG\fP
+.RS 4
+Activates printing debug information about tlenv internals to standard error
+.RE
+.sp
+\fBTLENV_HOOK_PATH\fP
+.RS 4
+Colon\-separated list of paths searched for tlenv plugin scripts
+.RE
+.sp
+\fBTLENV_DIR\fP (default: \fI$PWD\fP)
+.RS 4
+Directory to traverse bottom\-up to locate the \fI.texlive\-version\fP file
+.RE
+.SH "PLUGINS"
+.sp
+As its core functionality, tlenv only switches between TeX Live versions and does nothing else, but offers a plugin mechanism to hook into and override almost any aspect of its default behavior.
+.sp
+The most common plugin for tlenv is \fBtexlive\-install\fP which facilitates installing new TeX Live versions into the \fI$TLENV_ROOT/versions\fP directory.
+.SH "NOTES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+.URL "https://github.com/munepi/tlenv" "" ""
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+.URL "https://github.com/munepi/tlenv\-texlive\-install#readme" "" ""
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+.URL "https://tug.org/texlive/" "" ""
+.RE
+.SH "AUTHOR"
+.sp
+Munehiro Yamamoto
