@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
-# Summary: Rehash tlenv shims (run this after installing executables)
+# Summary: Regenerate tlenv shims
+#
+# Regenerate shims for every TeX Live executable in
+# `$TLENV_ROOT/versions/*/bin/<arch>' and write them to the
+# `$TLENV_ROOT/shims' directory. A shell environment properly set up for
+# tlenv will have this shims directory in PATH, which is the core mechanism
+# for TeX Live version switching.
+#
+# Running tlenv rehash should only be necessary after installing new TeX Live
+# versions or after installing packages that ship new executables. Note that
+# this is sometimes done automatically: the `tlenv install' command from the
+# texlive-install plugin runs rehash after every successful installation.
 
 set -e
 [ -n "$TLENV_DEBUG" ] && set -x
@@ -38,15 +49,14 @@ remove_prototype_shim() {
 # absolute path to the tlenv executable itself.
 tlenv_path() {
   local found
-  found="$(PATH="$TLENV_ORIG_PATH" command -v tlenv)"
+  found="$(PATH="$TLENV_ORIG_PATH" type -P tlenv)"
   if [[ $found == /* ]]; then
     echo "$found"
   elif [[ -n "$found" ]]; then
     echo "$PWD/${found#./}"
   else
     # Assume tlenv isn't in PATH.
-    local here="${BASH_SOURCE%/*}"
-    echo "${here%/*}/bin/tlenv"
+    echo "${BASH_SOURCE%/*}/tlenv"
   fi
 }
 
@@ -156,11 +166,9 @@ remove_outdated_shims
 registered_shims=( $(list_executable_names | sort -u) )
 
 # Allow plugins to register shims.
-OLDIFS="$IFS"
-IFS=$'\n' scripts=(`tlenv-hooks rehash`)
-IFS="$OLDIFS"
-
+IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks rehash)" || true
 for script in "${scripts[@]}"; do
+  # shellcheck disable=SC1090
   source "$script"
 done
 
