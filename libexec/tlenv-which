@@ -45,10 +45,9 @@ else
   TLENV_COMMAND_PATH="${TLENV_ROOT}/versions/${TLENV_VERSION}/bin/${TLENV_ARCH}/${TLENV_COMMAND}"
 fi
 
-OLDIFS="$IFS"
-IFS=$'\n' scripts=(`tlenv-hooks which`)
-IFS="$OLDIFS"
+IFS=$'\n' read -d '' -r -a scripts <<<"$(tlenv-hooks which)" || true
 for script in "${scripts[@]}"; do
+  # shellcheck disable=SC1090
   source "$script"
 done
 
