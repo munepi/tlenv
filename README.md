@@ -67,7 +67,7 @@ tlenv install current
 
 ...
 
-Installed current to /Users/<your account>/.tlenv/versions/current
+==> Installed current to /Users/<your account>/.tlenv/versions/current
 
 
 NOTE: to activate this TeX Live version as the new default, run: tlenv global current
@@ -93,6 +93,15 @@ TEXLIVE_INSTALL_TLNET=https://<MIRROR HISTORIC ARCHIVE>/systems/texlive/YYYY/tln
 ```
 
 The list of TUG official mirrors are [Historic archive of TeX material - TeX Users Group](https://tug.org/historic/).
+
+
+## Passing options to install-tl
+
+Arguments after `--` are passed through to the TeX Live installer `install-tl`.
+
+``` shell
+tlenv install current -- -no-verify-downloads
+```
 
 
 ## Plugins
