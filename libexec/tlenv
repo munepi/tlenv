@@ -82,7 +82,7 @@ if [ ! "${libexec_dir%/*}"/tlenv.d -ef "$TLENV_ROOT"/tlenv.d ]; then
   # Add tlenv's own `tlenv.d` unless tlenv was cloned to TLENV_ROOT
   TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${libexec_dir%/*}/tlenv.d"
 fi
-TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:/usr/etc/tlenv.d:/usr/local/etc/tlenv.d:/etc/tlenv.d:/usr/lib/tlenv/hooks"
+TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:/usr/etc/tlenv.d:/usr/local/etc/tlenv.d:/opt/homebrew/etc/tlenv.d:/etc/tlenv.d:/usr/lib/tlenv/hooks"
 for plugin_hook in "${TLENV_ROOT}/plugins/"*/etc/tlenv.d; do
   TLENV_HOOK_PATH="${TLENV_HOOK_PATH}:${plugin_hook}"
 done
