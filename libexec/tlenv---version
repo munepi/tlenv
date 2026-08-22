@@ -13,7 +13,7 @@ set -e
 [ -n "$TLENV_DEBUG" ] && set -x
 
 # tlenv is a port of rbenv; this release tracks rbenv v1.3.2.
-version="0.2"
+version="0.3"
 git_revision=""
 
 if cd "${BASH_SOURCE%/*}" 2>/dev/null && git remote -v 2>/dev/null | grep -q tlenv; then

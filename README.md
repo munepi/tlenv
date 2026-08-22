@@ -18,12 +18,6 @@ cd ~/.tlenv
 git clone https://github.com/munepi/tlenv-texlive-install.git  plugins/texlive-install
 ```
 
-If you use Mac with Apple silicon, then you may install the following plugin. 
-
-``` shell
-git clone https://github.com/munepi/tlenv-texlive-install-darwin.git  plugins/texlive-install-darwin
-```
-
 ### 2. Setup tlenv
 
 Run `tlenv init` and it will append the necessary line to the startup file of
@@ -107,7 +101,6 @@ tlenv install current -- -no-verify-downloads
 ## Plugins
 
 * [texlive-install](https://github.com/munepi/tlenv-texlive-install): TeX Live installation
-* [texlive-install-darwin](https://github.com/munepi/tlenv-texlive-install-darwin): TeX Live installation for macOS (Darwin)
 * [texlive-install-haranoajifonts](https://github.com/munepi/tlenv-texlive-install-haranoajifonts): install the latest HaranoAjiFonts when installing TeX Live
 * [shared-texmflocal](https://github.com/munepi/tlenv-shared-texmflocal): shared TEXMFLOCAL
 * [tlnet-texjporg](https://github.com/munepi/tlenv-tlnet-texjporg): setup tlnet on [texlive.texjp.org](https://texlive.texjp.org/) for the previous TeX Live versions
